@@ -7,9 +7,9 @@ static inline void
 WriteColor01(v3 color) {
     u8 r,g,b;
 
-    //color.x = Clamp(color.x, 0, 1);
-    //color.y = Clamp(color.y, 0, 1);
-    //color.z = Clamp(color.z, 0, 1);
+    color.x = Clamp(color.x, 0, 1);
+    color.y = Clamp(color.y, 0, 1);
+    color.z = Clamp(color.z, 0, 1);
 
     r = (u8)(color.x * 255);
     g = (u8)(color.y * 255);
@@ -21,17 +21,19 @@ s32 main() {
     fprintf(stdout, "P3\n");
 
     v3 ro = v3(0,0,0);
-    Sphere spheres[2];
-    spheres[0].center = v3(0, 0, -1.2f);
+    Sphere spheres[3];
+    spheres[0].center = v3(0, 0.2f, -2);
     spheres[0].radius = 0.5f;
-    spheres[1].center = v3(0, -100.5f, -10);
+    spheres[1].center = v3(0, -100, -10);
     spheres[1].radius = 100.0f;
+    spheres[2].center = v3(-1.0f, 0.2f, -2);
+    spheres[2].radius = 0.5f;
 
     World world;
     world.spheres = spheres;
     world.count   = sizeof(spheres) / sizeof(Sphere);
 
-    u32 samplePP = 1000;
+    u32 samplePP = 100;
     u32 depth    = 100;
 
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);

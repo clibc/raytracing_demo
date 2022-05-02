@@ -385,12 +385,12 @@ static inline float Clamp(float x, float min, float max) {
     return x;
 }
 
-static inline v3 Reflect(v3 d, v3 n) {
-    return d - (2*(d.Dot(n))*n);
-}
-
 static inline float Dot(v3 a, v3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+static inline v3 Reflect(v3 d, v3 n) {
+    return d - 2*Dot(d, n)*n;
 }
 
 static inline v3 Normalize(v3 a) {
@@ -403,7 +403,7 @@ static inline float Sqrt(float a) {
 
 static inline v3 RandomOnUnitSphere() {
     for(;;) {
-        v3 p = v3(Rand01(), Rand01(), Rand01());
+        v3 p = v3(Rand01() * 2 - 1, Rand01() * 2 - 1, Rand01() * 2 - 1);
         if(p.SqrLength() >= 1) continue;
         return p;
     }

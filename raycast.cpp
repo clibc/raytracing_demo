@@ -48,6 +48,7 @@ bool HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
     hit.point = ro + rd * hit.t;
     v3 out_normal = (hit.point - s.center) / s.radius;
     hit.SetFaceNormal(rd, out_normal);
+
     return true;
 }
 
@@ -73,7 +74,7 @@ v3 RayColor(Ray r, World world, u32 depth) {
 
     if(depth <= 0) return v3(0,0,0);
     
-    if(HitWorld(r, world, hit, 0, 100)) {
+    if(HitWorld(r, world, hit, 0.01f, 100)) {
         Ray ray;
         v3 target = hit.point + hit.normal + RandomOnUnitSphere();
         ray.o = hit.point;
