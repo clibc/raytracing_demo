@@ -371,40 +371,54 @@ inline void m4::Print() {
 #endif
 }
 
-static inline float PowerF32(float x, float p) {
+static inline float
+PowerF32(float x, float p) {
     return pow(x, p);
 }
 
-static inline float Rand01() {
+static inline float
+Rand01() {
     return (float)rand() / (float)RAND_MAX; 
 }
 
-static inline float Clamp(float x, float min, float max) {
+static inline float
+Clamp(float x, float min, float max) {
     if (x < min) return min;
     if (x > max) return max;
     return x;
 }
 
-static inline float Dot(v3 a, v3 b) {
+static inline float
+Dot(v3 a, v3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-static inline v3 Reflect(v3 d, v3 n) {
+static inline v3
+Reflect(v3 d, v3 n) {
     return d - 2*Dot(d, n)*n;
 }
 
-static inline v3 Normalize(v3 a) {
+static inline v3
+Normalize(v3 a) {
     return a / a.Length();
 }
 
-static inline float Sqrt(float a) {
+static inline float
+Sqrt(float a) {
     return sqrtf(a);
 }
 
-static inline v3 RandomOnUnitSphere() {
+static inline v3
+RandomInUnitSphere() {
     for(;;) {
         v3 p = v3(Rand01() * 2 - 1, Rand01() * 2 - 1, Rand01() * 2 - 1);
         if(p.SqrLength() >= 1) continue;
         return p;
     }
+}
+
+static inline v3
+RandomInHemiSphere(v3 normal) {
+    v3 rand = RandomInUnitSphere();
+    return (Dot(normal, rand) > 0) ? rand : rand * -1;
 }

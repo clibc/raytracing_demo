@@ -1,5 +1,15 @@
 #pragma once
 
+enum MaterialType {
+    LAMBERIAN,
+    METAL
+};
+
+struct Material {
+    MaterialType type;
+    v3 color;
+};
+
 struct Ray {
     v3 o;
     v3 d;
@@ -10,6 +20,7 @@ struct HitRecord {
     v3 normal;
     f32 t;
     bool front;
+    Material mat;
 
     inline void SetFaceNormal(v3 ray_dir, v3 out_normal) {
         front  = Dot(ray_dir, out_normal) < 0;
@@ -20,6 +31,7 @@ struct HitRecord {
 struct Sphere {
     v3 center;
     f32 radius;
+    Material mat;
 };
 
 struct World {
@@ -48,6 +60,7 @@ bool HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
     hit.point = ro + rd * hit.t;
     v3 out_normal = (hit.point - s.center) / s.radius;
     hit.SetFaceNormal(rd, out_normal);
+    hit.mat = s.mat;
 
     return true;
 }
@@ -76,13 +89,20 @@ v3 RayColor(Ray r, World world, u32 depth) {
     
     if(HitWorld(r, world, hit, 0.01f, 100)) {
         Ray ray;
-        v3 target = hit.point + hit.normal + RandomOnUnitSphere();
         ray.o = hit.point;
-        ray.d = target - hit.point;
 
-        //return (hit.normal + 1) * 0.5f;
-        
-        return 0.5f * RayColor(ray, world, depth - 1);
+        if(hit.mat.type == LAMBERIAN) { 
+            v3 target = hit.point + RandomInHemiSphere(hit.normal);
+            ray.d = target - hit.point;
+            return hit.mat.color * RayColor(ray, world, depth - 1);
+        }
+        else if (hit.mat.type == METAL) {
+            ray.d = Normalize(Reflect(r.d, hit.normal));
+
+            if(Dot(ray.d, hit.normal) > 0)
+                return hit.mat.color * RayColor(ray, world, depth - 1);
+            else return v3(0,0,0);
+        }
     }
 
     float t1 = 0.5f*(r.d.y + 1.0f);
