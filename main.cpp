@@ -1,3 +1,4 @@
+
 #include "headers.h"
 
 #define IMAGE_WIDTH 1024
@@ -21,38 +22,41 @@ s32 main() {
     fprintf(stdout, "P3\n");
 
     v3 ro = v3(0,0,0);
-    Sphere spheres[5];
-    spheres[0].center = v3(-0.6f, 0.2f, -1.2);
-    spheres[0].radius = -0.5f;
+    Sphere spheres[6];
+    spheres[0].center = v3(-1.2f, 0.2f, -1.2);
+    spheres[0].radius = 0.5f;
     spheres[0].mat.type  = DIELECTRIC;
     spheres[0].mat.color = v3(0.8, 0.8, 0.8);
-    spheres[0].mat.fuzz  = 0;
+
+    spheres[1].center = v3(-1.2f, 0.2f, -1.2);
+    spheres[1].radius = -0.45f;
+    spheres[1].mat.type  = DIELECTRIC;
+    spheres[1].mat.color = v3(0.8, 0.8, 0.8);
     
-    spheres[1].center = v3(0, -100, -10);
-    spheres[1].radius = 100.0f;
-    spheres[1].mat.type  = LAMBERIAN;
-    spheres[1].mat.color = v3(0.3, 0.3, 0.4);
-    
-    spheres[2].center = v3(0.5f, 0.2f, -1.2);
-    spheres[2].radius = 0.5f;
+    spheres[2].center = v3(0, -100, -10);
+    spheres[2].radius = 100.0f;
     spheres[2].mat.type  = LAMBERIAN;
-    spheres[2].mat.color = v3(0.4, 0.3, 0.3);
-
-    spheres[3].center = v3(-0.1f, -0.1, -0.3f);
-    spheres[3].radius = 0.1f;
+    spheres[2].mat.color = v3(0.8, 0.8, 0.0);
+    
+    spheres[3].center = v3(0.5f, 0.2f, -1.2);
+    spheres[3].radius = 0.5f;
     spheres[3].mat.type  = LAMBERIAN;
-    spheres[3].mat.color = v3(0.1, 0.3, 0.9);
+    spheres[3].mat.color = v3(0.4, 0.3, 0.3);
 
-    spheres[4].center = v3(0.2f, -0.1, -0.3f);
+    spheres[4].center = v3(-0.1f, -0.1, -0.3f);
     spheres[4].radius = 0.1f;
-    spheres[4].mat.type  = METAL;
-    spheres[4].mat.color = v3(0.6, 0.6, 0.6);
-    spheres[0].mat.fuzz  = 0.2f;
+    spheres[4].mat.type  = LAMBERIAN;
+    spheres[4].mat.color = v3(0.1, 0.3, 0.9);
+
+    spheres[5].center = v3(0.2f, -0.1, -0.3f);
+    spheres[5].radius = 0.1f;
+    spheres[5].mat.type  = METAL;
+    spheres[5].mat.color = v3(0.6, 0.6, 0.6);
 
     World world;
     world.spheres = spheres;
     world.count   = sizeof(spheres) / sizeof(Sphere);
-    //world.count  = 3;
+    world.count  = 3;
     
     u32 samplePP = 100;
     u32 depth    = 100;
