@@ -372,6 +372,16 @@ inline void m4::Print() {
 }
 
 static inline float
+Min(float a, float b) {
+    return a < b ? a : b;
+}
+
+static inline float
+Max(float a, float b) {
+    return a > b ? a : b;
+}
+
+static inline float
 PowerF32(float x, float p) {
     return pow(x, p);
 }
@@ -391,11 +401,6 @@ Clamp(float x, float min, float max) {
 static inline float
 Dot(v3 a, v3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-static inline v3
-Reflect(v3 d, v3 n) {
-    return d - 2*Dot(d, n)*n;
 }
 
 static inline v3
@@ -421,4 +426,17 @@ static inline v3
 RandomInHemiSphere(v3 normal) {
     v3 rand = RandomInUnitSphere();
     return (Dot(normal, rand) > 0) ? rand : rand * -1;
+}
+
+static inline v3
+Reflect(v3 d, v3 n) {
+    return d - 2*Dot(d, n)*n;
+}
+
+static inline v3
+Refract(v3 uv, v3 n, float etai_over_etat) {
+    auto cos_theta = Min(Dot(uv * -1, n), 1.0);
+    v3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
+    v3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.SqrLength())) * n;
+    return r_out_perp + r_out_parallel;
 }
