@@ -57,23 +57,30 @@ s32 main() {
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
+    f32 fov = 90;
     v3 CamLookAt = v3(0,0,-1);
     v3 CamPos    = v3(-2,2,1);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));
-    CamX.Print();
-    CamY.Print();
-    CamZ.Print();
     m4 CamToWorld = {};
+
+    f32 aspect = (float)IMAGE_WIDTH / (float)IMAGE_HEIGHT;
+    f32 theta = DegToRad(fov);
+    f32 h = Tan(theta/2);
+    f32 viewport_y = h * 2.0f;
+    f32 viewport_x = viewport_y * aspect;
+
+    // divide by 2 cuz range is (-1 1)
+    CamX *= viewport_x/2; 
+    CamY *= viewport_y/2;
+
     CamToWorld.SetRow(0, CamX.x, CamX.y, CamX.z, 0);
     CamToWorld.SetRow(1, CamY.x, CamY.y, CamY.z, 0);
     CamToWorld.SetRow(2, CamZ.x, CamZ.y, CamZ.z, 0);
     CamToWorld.SetRow(3, CamPos.x, CamPos.y, CamPos.z, 1);
-    CamToWorld.Print();
     //
 
-    f32 aspect = (float)IMAGE_WIDTH / (float)IMAGE_HEIGHT;
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
         DebugLog("\rRendering %f", ((float)y/IMAGE_HEIGHT) * 100.0f);
         for(s32 x = 0; x < IMAGE_WIDTH; ++x) {
@@ -86,7 +93,7 @@ s32 main() {
                 v3 uv = v3(tx, ty, -1);
 
                 uv.y = 1 - uv.y;
-                uv.x = (1 - uv.x * 2) * aspect;
+                uv.x = (1 - uv.x * 2);// * aspect;
                 uv.y = 1 - uv.y * 2;
 
                 v4 WorldUV = CamToWorld * v4(uv, 1.0f);

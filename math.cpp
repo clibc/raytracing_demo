@@ -4,6 +4,8 @@
 #include <cmath>
 #include <stdlib.h> // for rand()
 
+#define PI 3.14159265359
+
 static inline float PowerF32(float, float);
 
 struct v3 {
@@ -448,4 +450,14 @@ Refract(v3 uv, v3 n, float etai_over_etat) {
     v3 r_out_perp =  etai_over_etat * (uv + cos_theta*n);
     v3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.SqrLength())) * n;
     return r_out_perp + r_out_parallel;
+}
+
+static inline float
+DegToRad(float deg) {
+    return deg * (PI/180.0f);
+}
+
+static inline float
+Tan(float a) {
+    return tan(a);
 }
