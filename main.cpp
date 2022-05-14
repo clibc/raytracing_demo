@@ -1,4 +1,3 @@
-
 #include "headers.h"
 
 #define IMAGE_WIDTH 1024
@@ -56,12 +55,27 @@ s32 main() {
     World world;
     world.spheres = spheres;
     world.count   = sizeof(spheres) / sizeof(Sphere);
-    world.count  = 3;
-    
     u32 samplePP = 100;
     u32 depth    = 100;
     
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
+
+    //Camera
+    v3 CamLookAt = v3(0.5, 0.2, -1.2);
+    v3 CamPos    = v3(0.5, 0.2, 0);
+    v3 CamX      = Normalize(Cross(CamLookAt-CamPos, v3(0,1,0)));
+    v3 CamY      = Normalize(Cross(CamX, CamLookAt));
+    v3 CamZ      = Normalize(Cross(CamX, CamY));
+    CamX.Print();
+    CamY.Print();
+    CamZ.Print();
+    m4 CamToWorld = {};
+    CamToWorld.SetColumn(0, CamX.x, CamX.y, CamX.z, CamPos.x);
+    CamToWorld.SetColumn(1, CamY.x, CamY.y, CamY.z, CamPos.y);
+    CamToWorld.SetColumn(2, CamZ.x, CamZ.y, CamZ.z, CamPos.z);
+    CamToWorld.SetColumn(3, 0, 0, 0, 1);
+    CamToWorld.Print();
+    //
     
     f32 aspect = (float)IMAGE_WIDTH / (float)IMAGE_HEIGHT;
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
@@ -78,7 +92,13 @@ s32 main() {
                 uv.x = (1 - uv.x * 2) * aspect;
                 uv.y = 1 - uv.y * 2;
                 uv.z = 1.0f;
-                
+
+                v4 WorldUV = CamToWorld * v4(uv, 1.0f);
+                uv.x = WorldUV.x;
+                uv.y = WorldUV.y;
+                uv.z = WorldUV.z;
+
+                ro = CamPos;
                 Ray r;
                 r.o = ro;
                 r.d = Normalize(ro - uv);
