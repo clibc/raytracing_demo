@@ -2,6 +2,10 @@
 *.d
 
 *.ppm
+*.rdbg
+*.ilk
+*.pdb
+.vs/
 
 # Compiled Object files
 *.slo
