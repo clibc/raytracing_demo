@@ -100,7 +100,7 @@ RayColor(Ray r, World world, u32 depth) {
 
     if(depth <= 0) return v3(0,0,0);
     
-    if(HitWorld(r, world, hit, 0.01f, 100)) {
+    if(HitWorld(r, world, hit, 0.0005f, 100)) {
         Ray ray;
         ray.o = hit.point;
 

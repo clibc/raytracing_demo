@@ -4,7 +4,8 @@
 #include <cmath>
 #include <stdlib.h> // for rand()
 
-#define PI 3.14159265359
+#define PI  3.14159265359
+#define TAU 6.28318530718
 
 static inline float PowerF32(float, float);
 
@@ -440,6 +441,15 @@ RandomInHemiSphere(v3 normal) {
 }
 
 static inline v3
+RandomInUnitDisk() {
+    while (true) {
+        v3 p = v3(Rand01()*2-1, Rand01()*2-1, 0);
+        if (p.SqrLength() >= 1) continue;
+        return p;
+    }
+}
+
+static inline v3
 Reflect(v3 d, v3 n) {
     return d - 2*Dot(d, n)*n;
 }
@@ -458,6 +468,26 @@ DegToRad(float deg) {
 }
 
 static inline float
+Sin(float a) {
+    return sin(a);
+}
+
+static inline float
+Cos(float a) {
+    return cos(a);
+}
+
+static inline float
 Tan(float a) {
     return tan(a);
+}
+
+static inline float
+SmoothStep(float edge0, float edge1, float x) {
+   if (x < edge0)
+      return 0;
+   if (x >= edge1)
+      return 1;
+   x = (x - edge0) / (edge1 - edge0);
+   return x * x * (3 - 2 * x);
 }

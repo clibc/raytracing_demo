@@ -57,7 +57,7 @@ s32 main() {
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
-    f32 fov = 90;
+    f32 fov = 20;    
     v3 CamLookAt = v3(0,0,-1);
     v3 CamPos    = v3(-2,2,1);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
@@ -71,10 +71,12 @@ s32 main() {
     f32 viewport_y = h * 2.0f;
     f32 viewport_x = viewport_y * aspect;
 
+    f32 lens_radius = 0.1;
+    
     // divide by 2 cuz range is (-1 1)
-    CamX *= viewport_x/2; 
+    CamX *= viewport_x/2;
     CamY *= viewport_y/2;
-
+    
     CamToWorld.SetRow(0, CamX.x, CamX.y, CamX.z, 0);
     CamToWorld.SetRow(1, CamY.x, CamY.y, CamY.z, 0);
     CamToWorld.SetRow(2, CamZ.x, CamZ.y, CamZ.z, 0);
@@ -93,9 +95,16 @@ s32 main() {
                 v3 uv = v3(tx, ty, -1);
 
                 uv.y = 1 - uv.y;
-                uv.x = (1 - uv.x * 2);// * aspect;
+                uv.x = (1 - uv.x * 2);
                 uv.y = 1 - uv.y * 2;
 
+                // lens calculation
+                v3 d = uv;
+                d.x *= aspect;
+                f32 dist = d.Length();
+                dist = SmoothStep(1.5, 1.7, dist);
+                v3 rd = lens_radius * RandomInUnitDisk();
+                uv += rd * dist;
                 v4 WorldUV = CamToWorld * v4(uv, 1.0f);
                 uv.x = WorldUV.x;
                 uv.y = WorldUV.y;
