@@ -3,6 +3,8 @@
 #define IMAGE_WIDTH 1024
 #define IMAGE_HEIGHT 576
 
+static void RandomScene(World&);
+
 static inline void
 WriteColor01(v3 color) {
     u8 r,g,b;
@@ -20,46 +22,18 @@ WriteColor01(v3 color) {
 s32 main() {
     fprintf(stdout, "P3\n");
 
-    Sphere spheres[6];
-    spheres[0].center = v3(-1.0, 0.0, -1.0);
-    spheres[0].radius = 0.5f;
-    spheres[0].mat.type  = DIELECTRIC;
-    spheres[0].mat.color = v3(0.8, 0.8, 0.8);
-
-    spheres[1].center = v3(-1.0, 0.0, -1.0);
-    spheres[1].radius = -0.45f;
-    spheres[1].mat.type  = DIELECTRIC;
-    spheres[1].mat.color = v3(0.8, 0.8, 0.8);
-    
-    spheres[2].center = v3(0, -100.5, -1.0);
-    spheres[2].radius = 100.0f;
-    spheres[2].mat.type  = LAMBERIAN;
-    spheres[2].mat.color = v3(0.8, 0.8, 0.0);
-    
-    spheres[3].center = v3(0.0, 0.0, -1.0);
-    spheres[3].radius = 0.5f;
-    spheres[3].mat.type  = LAMBERIAN;
-    spheres[3].mat.color = v3(0.1, 0.2, 0.5);
-
-    spheres[5].center = v3(1.0, 0.0, -1.0);
-    spheres[5].radius = 0.5f;
-    spheres[5].mat.type  = METAL;
-    spheres[5].mat.color = v3(0.8, 0.6, 0.2);
-    spheres[5].mat.fuzz  = 0.01;
-    
-
     World world;
-    world.spheres = spheres;
-    world.count   = sizeof(spheres) / sizeof(Sphere);
-    u32 samplePP = 15;
+    RandomScene(world);
+
+    u32 samplePP = 100;
     u32 depth    = 50;
     
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
     f32 fov = 20;    
-    v3 CamLookAt = v3(0,0,-1);
-    v3 CamPos    = v3(-2,2,1);
+    v3 CamLookAt = v3(0,0,0);
+    v3 CamPos    = v3(13,2,3);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));
@@ -99,12 +73,12 @@ s32 main() {
                 uv.y = 1 - uv.y * 2;
 
                 // lens calculation
-                v3 d = uv;
-                d.x *= aspect;
-                f32 dist = d.Length();
-                dist = SmoothStep(1.5, 1.7, dist);
-                v3 rd = lens_radius * RandomInUnitDisk();
-                uv += rd * dist;
+                //v3 d = uv;
+                //d.x *= aspect;
+                //f32 dist = d.Length();
+                //dist = SmoothStep(1.5, 1.7, dist);
+                //v3 rd = lens_radius * RandomInUnitDisk();
+                //uv += rd * dist;
                 v4 WorldUV = CamToWorld * v4(uv, 1.0f);
                 uv.x = WorldUV.x;
                 uv.y = WorldUV.y;
@@ -127,4 +101,78 @@ s32 main() {
     }
     
     return 0;
+}
+
+static void
+RandomScene(World& world) {
+    world.spheres = (Sphere*)malloc(sizeof(Sphere) * 500);
+    Sphere* spheres = world.spheres;
+    
+    // ground
+    spheres[0].center = v3(0, -1000, 0);
+    spheres[0].radius = 1000.0f;
+    spheres[0].mat.type  = LAMBERIAN;
+    spheres[0].mat.color = v3(0.8, 0.8, 0.0);
+
+    // middle
+    spheres[2].center = v3(0, 1, 0);
+    spheres[2].radius = 1;
+    spheres[2].mat.type  = DIELECTRIC;
+    spheres[2].mat.color = v3(0.8, 0.8, 0.8);
+
+    spheres[3].center = v3(0, 1, 0);
+    spheres[3].radius = -0.95;
+    spheres[3].mat.type  = DIELECTRIC;
+    spheres[3].mat.color = v3(0.8, 0.8, 0.8);
+
+    // left
+    spheres[1].center = v3(-4, 1, 0);
+    spheres[1].radius = 1;
+    spheres[1].mat.type  = LAMBERIAN;
+    spheres[1].mat.color = v3(0.1, 0.2, 0.5);
+    
+    // right
+    spheres[4].center = v3(4, 1, 0);
+    spheres[4].radius = 1;
+    spheres[4].mat.type  = METAL;
+    spheres[4].mat.color = v3(0.8, 0.6, 0.2);
+    spheres[4].mat.fuzz  = 0.01;
+
+    u32 Index = 5;
+
+    for(s32 a = -11; a < 11; ++a) {
+        for (int b = -11; b < 11; b++) {
+            f32 x = (float)a;
+            f32 z = (float)b;
+            f32 RandomMat = Rand01();
+            v3  Pos       = v3(x + Rand01() * 0.9, 0.2, z + Rand01() * 0.9);
+            v3  RandomCol = v3(Rand01(), Rand01(), Rand01());
+            f32 Radius    = 0.2;
+            
+            if((Pos - v3(4,0,0)).Length() > 0.9) {
+                if(RandomMat < 0.8) { // diffuse
+                    spheres[Index].center = Pos;
+                    spheres[Index].radius = Radius;
+                    spheres[Index].mat.type  = LAMBERIAN;
+                    spheres[Index].mat.color = RandomCol;
+                }
+                else if(RandomMat < 0.95) { // metal
+                    spheres[Index].center = Pos;
+                    spheres[Index].radius = Radius;
+                    spheres[Index].mat.type  = METAL;
+                    spheres[Index].mat.color = RandomCol;
+                    spheres[Index].mat.fuzz  = Rand01() * 0.5;
+                }
+                else { // glass
+                    spheres[Index].center = Pos;
+                    spheres[Index].radius = Radius;
+                    spheres[Index].mat.type  = DIELECTRIC;
+                    spheres[Index].mat.color = v3(0.8, 0.8, 0.8);
+                }
+                ++Index;
+            }
+        }
+    }
+    
+    world.count = Index;
 }
