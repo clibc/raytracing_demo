@@ -1,7 +1,7 @@
 #include "headers.h"
 
-#define IMAGE_WIDTH 1024
-#define IMAGE_HEIGHT 576
+#define IMAGE_WIDTH 1200
+#define IMAGE_HEIGHT 800
 
 static void RandomScene(World&);
 
@@ -55,7 +55,7 @@ s32 main() {
     f32 FocalLength = (CamPos - v3(4, 1, 0)).Length();
     f32 Aperture = 0.1;
     
-    u32 SamplePP = 100;
+    u32 SamplePP = 500;
     u32 Depth    = 100;
 
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
