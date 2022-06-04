@@ -79,9 +79,8 @@ s32 main() {
                 uv.z = WorldUV.z;
 
                 Ray r;
-                r.o = CamPos;
                 r.d = Normalize(r.o - uv);
-                                
+
                 v3 FocalPoint = CamPos + r.d * FocalLength;
                 v3 RandomPoint = RandomInUnitDisk() * Aperture;
                 r.o = CamPos + RandomPoint.x * CamX + RandomPoint.y * CamY;
