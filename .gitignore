@@ -1,6 +1,7 @@
 # Prerequisites
 *.d
 
+*.ppm
 *.rdbg
 *.ilk
 *.pdb

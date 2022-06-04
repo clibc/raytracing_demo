@@ -1,2 +1,2 @@
 # RayTracing Demo
-![](demo.ppm)
+![](demo.jpg)
