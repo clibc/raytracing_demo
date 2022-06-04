@@ -26,7 +26,7 @@ struct HitRecord {
 
     inline void SetFaceNormal(v3 ray_dir, v3 out_normal) {
         front  = Dot(ray_dir, out_normal) < 0;
-        normal = front ? out_normal : out_normal * -1; 
+        normal = front ? out_normal : out_normal * -1;
     }
 };
 
@@ -133,7 +133,11 @@ RayColor(Ray r, World world, u32 depth) {
                 ray.d = Refract(unit_dir, hit.normal, refraction_ratio);
             }
 
-            //r.d = Normalize(r.d);
+            // if(!hit.front) {
+            //     DebugLog("Is not front\n");
+            // }
+
+//r.d = Normalize(r.d);
             return RayColor(ray, world, depth - 1);
         }
     }

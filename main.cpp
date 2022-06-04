@@ -24,9 +24,6 @@ s32 main() {
 
     World world;
     RandomScene(world);
-
-    u32 samplePP = 100;
-    u32 depth    = 50;
     
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
@@ -45,8 +42,6 @@ s32 main() {
     f32 viewport_y = h * 2.0f;
     f32 viewport_x = viewport_y * aspect;
 
-    f32 lens_radius = 0.1;
-    
     // divide by 2 cuz range is (-1 1)
     CamX *= viewport_x/2;
     CamY *= viewport_y/2;
@@ -56,12 +51,18 @@ s32 main() {
     CamToWorld.SetRow(2, CamZ.x, CamZ.y, CamZ.z, 0);
     CamToWorld.SetRow(3, CamPos.x, CamPos.y, CamPos.z, 1);
     //
+    
+    f32 FocalLength = (CamPos - v3(4, 1, 0)).Length();
+    f32 Aperture = 0.1;
+    
+    u32 SamplePP = 100;
+    u32 Depth    = 100;
 
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
         DebugLog("\rRendering %f", ((float)y/IMAGE_HEIGHT) * 100.0f);
         for(s32 x = 0; x < IMAGE_WIDTH; ++x) {
             v3 color = v3(0,0,0);
-            for(u32 i = 0; i < samplePP; ++i) {
+            for(u32 i = 0; i < SamplePP; ++i) {
                 f32 randx = Rand01() * 2 - 1;
                 f32 randy = Rand01() * 2 - 1;
                 f32 tx = ((float)x + 0.5f + randx) / (float)(IMAGE_WIDTH - 1);
@@ -72,13 +73,6 @@ s32 main() {
                 uv.x = (1 - uv.x * 2);
                 uv.y = 1 - uv.y * 2;
 
-                // lens calculation
-                //v3 d = uv;
-                //d.x *= aspect;
-                //f32 dist = d.Length();
-                //dist = SmoothStep(1.5, 1.7, dist);
-                //v3 rd = lens_radius * RandomInUnitDisk();
-                //uv += rd * dist;
                 v4 WorldUV = CamToWorld * v4(uv, 1.0f);
                 uv.x = WorldUV.x;
                 uv.y = WorldUV.y;
@@ -87,10 +81,16 @@ s32 main() {
                 Ray r;
                 r.o = CamPos;
                 r.d = Normalize(r.o - uv);
-                color += RayColor(r, world, depth);
+                                
+                v3 FocalPoint = CamPos + r.d * FocalLength;
+                v3 RandomPoint = RandomInUnitDisk() * Aperture;
+                r.o = CamPos + RandomPoint.x * CamX + RandomPoint.y * CamY;
+                r.d = Normalize(FocalPoint - r.o);
+                
+                color += RayColor(r, world, Depth);
             }
 
-            color /= samplePP;
+            color /= SamplePP;
             
             color.x = Sqrt(color.x);
             color.y = Sqrt(color.y);
@@ -105,7 +105,8 @@ s32 main() {
 
 static void
 RandomScene(World& world) {
-    world.spheres = (Sphere*)malloc(sizeof(Sphere) * 500);
+    u32 MaxSphereCount = 1000;
+    world.spheres = (Sphere*)malloc(sizeof(Sphere) * MaxSphereCount);
     Sphere* spheres = world.spheres;
     
     // ground
@@ -138,10 +139,13 @@ RandomScene(World& world) {
     spheres[4].mat.color = v3(0.8, 0.6, 0.2);
     spheres[4].mat.fuzz  = 0.01;
 
-    u32 Index = 5;
+    world.count = 5;
 
+    u32 Index = 5;
+#if 1
     for(s32 a = -11; a < 11; ++a) {
         for (int b = -11; b < 11; b++) {
+            if(Index >= MaxSphereCount) break;
             f32 x = (float)a;
             f32 z = (float)b;
             f32 RandomMat = Rand01();
@@ -173,6 +177,6 @@ RandomScene(World& world) {
             }
         }
     }
-    
+#endif    
     world.count = Index;
 }
