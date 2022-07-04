@@ -1,2 +1,2 @@
 # RayTracing Demo
-![](demo.jpg)
+![](demo.png)

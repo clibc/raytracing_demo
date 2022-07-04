@@ -9,9 +9,9 @@ static inline void
 WriteColor01(v3 color) {
     u8 r,g,b;
 
-    color.x = Clamp(color.x, 0, 1);
-    color.y = Clamp(color.y, 0, 1);
-    color.z = Clamp(color.z, 0, 1);
+    color.x = Clamp(color.x, 0.0f, 1.0f);
+    color.y = Clamp(color.y, 0.0f, 1.0f);
+    color.z = Clamp(color.z, 0.0f, 1.0f);
 
     r = (u8)(color.x * 255);
     g = (u8)(color.y * 255);
@@ -52,11 +52,11 @@ s32 main() {
     CamToWorld.SetRow(3, CamPos.x, CamPos.y, CamPos.z, 1);
     //
     
-    f32 FocalLength = (CamPos - v3(4, 1, 0)).Length();
+    f32 FocalLength = Length(CamPos - v3(4, 1, 0));
     f32 Aperture = 0.1;
     
-    u32 SamplePP = 500;
-    u32 Depth    = 100;
+    u32 SamplePP = 50;
+    u32 Depth    = 10;
 
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
         DebugLog("\rRendering %f", ((float)y/IMAGE_HEIGHT) * 100.0f);
@@ -141,7 +141,7 @@ RandomScene(World& world) {
     world.count = 5;
 
     u32 Index = 5;
-#if 1
+#if 0
     for(s32 a = -11; a < 11; ++a) {
         for (int b = -11; b < 11; b++) {
             if(Index >= MaxSphereCount) break;
@@ -152,7 +152,7 @@ RandomScene(World& world) {
             v3  RandomCol = v3(Rand01(), Rand01(), Rand01());
             f32 Radius    = 0.2;
             
-            if((Pos - v3(4,0,0)).Length() > 0.9) {
+            if((Pos - Length(v3(4,0,0)) > 0.9) {
                 if(RandomMat < 0.8) { // diffuse
                     spheres[Index].center = Pos;
                     spheres[Index].radius = Radius;

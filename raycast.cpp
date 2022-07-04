@@ -52,9 +52,9 @@ Reflectance(f32 cosine, f32 ref_idx) {
 static bool
 HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
     v3 oc = ro - s.center;
-    f32 a = rd.SqrLength();
+    f32 a = SqrLength(rd);
     f32 b = Dot(oc, rd);
-    f32 c = oc.SqrLength() - s.radius * s.radius;
+    f32 c = SqrLength(oc) - s.radius * s.radius;
     f32 discriminant = b*b - a*c;
     
     if(discriminant < 0) return false;
