@@ -36,9 +36,19 @@ struct Sphere {
     Material mat;
 };
 
+struct Triangle
+{
+    v3 V0;
+    v3 V1;
+    v3 V2;
+    Material mat;
+};
+
 struct World {
     Sphere* spheres;
     u32 count;
+    Triangle* triangles;
+    u32 triangle_count;
 };
 
 static f32
@@ -76,6 +86,57 @@ HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
     return true;
 }
 
+bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TMax)
+{
+    v3 Edge0 = Tri.V1 - Tri.V0;
+    v3 Edge1 = Tri.V2 - Tri.V1;
+    v3 Edge2 = Tri.V0 - Tri.V2;
+    v3 Normal = Normalize(Cross(Edge1,Edge2));
+    v3 Origin = v3(0,0, (Tri.V0.z + Tri.V1.z + Tri.V2.z) / 3.0f); // So we dont care what is exact origin is only z is important
+
+    v3 Point = {};
+    f32 T = 0;
+    bool PlaneHit = false;
+    
+    { // Plane hit
+        f32 Denom = Dot(Normal, RD);
+        if(Abs(Denom) > 0.000001f) // TODO: This Abs() is not needed here, so probably there is something wrong with my equation. Plane normal does not make sense.
+        {
+            T = Dot(Normal, (Origin - RO)) / Denom;
+
+            if(T > TMin && T < TMax)
+            {
+                Point = RO + RD * T;
+                PlaneHit = true; 
+            }
+        }
+    }
+
+    if(PlaneHit)
+    {
+        bool IsInsideEdge0 = Dot(Normal, Cross(Edge0, Point - Tri.V0)) > 0;
+        bool IsInsideEdge1 = Dot(Normal, Cross(Edge1, Point - Tri.V1)) > 0;
+        bool IsInsideEdge2 = Dot(Normal, Cross(Edge2, Point - Tri.V2)) > 0;
+
+        if(IsInsideEdge0 && IsInsideEdge1 && IsInsideEdge2)
+        {
+            Material M;
+            M.type = METAL;
+            M.color = v3(0.8, 0.6, 0.2);
+            M.fuzz = 0.01f;
+
+            Output.mat = M;
+            Output.t = T;
+            Output.front = true;
+            Output.point = Point;
+            Output.normal = Normal;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static bool
 HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max) {
     HitRecord local_hit;
@@ -90,6 +151,16 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max) {
             hit = local_hit;
         }
     }
+
+    for(u32 i = 0; i < world.triangle_count; ++i) {
+        Triangle t = world.triangles[i];
+        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest)) {
+            isHit = true;
+            closest = local_hit.t;
+            hit = local_hit;
+        }
+    }
+
 
     return isHit;
 }

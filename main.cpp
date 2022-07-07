@@ -1,5 +1,7 @@
 #include "headers.h"
 
+//#define IMAGE_WIDTH 300
+//#define IMAGE_HEIGHT 200
 #define IMAGE_WIDTH 1200
 #define IMAGE_HEIGHT 800
 
@@ -24,13 +26,34 @@ s32 main() {
 
     World world;
     RandomScene(world);
+    Triangle Triangles[2];
+    world.triangle_count = 2;
+    world.triangles = Triangles;
+
+    Triangles[0].V0 = v3(-1,0,1);
+    Triangles[0].V1 = v3(1,0, 1);
+    Triangles[0].V2 = v3(-1,2, 1);
+
+    Triangles[1].V0 = v3(1,0,1);
+    Triangles[1].V1 = v3(1,2, 1);
+    Triangles[1].V2 = v3(-1,2,1);
+
+    v3 TriPos = v3(2, 0, 1);
+
+    Triangles[0].V0 += TriPos;
+    Triangles[0].V1 += TriPos;
+    Triangles[0].V2 += TriPos;
+
+    Triangles[1].V0 += TriPos;
+    Triangles[1].V1 += TriPos;
+    Triangles[1].V2 += TriPos;
     
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
     f32 fov = 20;    
     v3 CamLookAt = v3(0,0,0);
-    v3 CamPos    = v3(13,2,3);
+    v3 CamPos    = v3(0,1,17);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));
