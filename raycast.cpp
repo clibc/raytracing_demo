@@ -91,16 +91,17 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
     v3 Edge0 = Tri.V1 - Tri.V0;
     v3 Edge1 = Tri.V2 - Tri.V1;
     v3 Edge2 = Tri.V0 - Tri.V2;
-    v3 Normal = Normalize(Cross(Edge1,Edge2));
-    v3 Origin = v3(0,0, (Tri.V0.z + Tri.V1.z + Tri.V2.z) / 3.0f); // So we dont care what is exact origin is only z is important
+    v3 Normal = Normalize(Cross(Tri.V1 - Tri.V0, Tri.V2 - Tri.V0));
 
+    v3 Origin = Tri.V0 + (Edge0 * 0.5f) + Tri.V0 + (Tri.V2 - Tri.V0) * 0.5f;
+    
     v3 Point = {};
     f32 T = 0;
     bool PlaneHit = false;
     
     { // Plane hit
         f32 Denom = Dot(Normal, RD);
-        if(Abs(Denom) > 0.000001f) // TODO: This Abs() is not needed here, so probably there is something wrong with my equation. Plane normal does not make sense.
+        if(Abs(Denom) > 0.000001f)
         {
             T = Dot(Normal, (Origin - RO)) / Denom;
 
