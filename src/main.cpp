@@ -63,7 +63,7 @@ s32 main() {
         AdditionalTriangles[TriIndex].V1 = Vertices[I + 1] + TriPos;
         AdditionalTriangles[TriIndex].V2 = Vertices[I + 2] + TriPos;
     }
-#if 0
+#if 1
     v3 V1 = v3(-1.000000, -1.000000,  1.000000);
     v3 V2 = v3(-1.000000,  1.000000,  1.000000);
     v3 V3 = v3(-1.000000, -1.000000, -1.000000);

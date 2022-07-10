@@ -1,2 +1,4 @@
 @echo off
-cl /FC /nologo /EHsc /Zi /Od main.cpp
+pushd ..\_build\
+cl /FC /nologo /EHsc /Zi /Od ..\src\main.cpp
+popd

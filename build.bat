@@ -1,3 +1,4 @@
 @echo off
-cl /FC /nologo /EHsc /Zi /O2 main.cpp && main.exe > test.ppm && start test.ppm
-
+pushd ..\_build\
+cl /FC /nologo /EHsc /Zi /O2 ..\src\main.cpp && main.exe > test.ppm && start test.ppm
+popd
