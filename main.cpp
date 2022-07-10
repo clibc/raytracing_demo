@@ -38,7 +38,7 @@ s32 main() {
     Triangles[1].V1 = v3(1,2, 1);
     Triangles[1].V2 = v3(-1,2,1);
 
-    v3 TriPos = v3(0, 0, 0);
+    v3 TriPos = v3(0, 1, 4);
 
     Triangles[0].V0 += TriPos;
     Triangles[0].V1 += TriPos;
@@ -48,9 +48,9 @@ s32 main() {
     Triangles[1].V1 += TriPos;
     Triangles[1].V2 += TriPos;
 
-    v3 Vertices[100];
+    v3 Vertices[10000];
     u32 VertexCount;
-    LoadOBJ("C:\\Users\\clibc\\Desktop\\cube.obj", Vertices, &VertexCount);
+    LoadOBJ("C:\\Users\\clibc\\Desktop\\monkey.obj", Vertices, &VertexCount);
 
     world.triangle_count = VertexCount / 3;
     Triangle* AdditionalTriangles = (Triangle*)malloc(sizeof(Triangle) * (VertexCount / 3));
@@ -63,7 +63,7 @@ s32 main() {
         AdditionalTriangles[TriIndex].V1 = Vertices[I + 1] + TriPos;
         AdditionalTriangles[TriIndex].V2 = Vertices[I + 2] + TriPos;
     }
-#if 1
+#if 0
     v3 V1 = v3(-1.000000, -1.000000,  1.000000);
     v3 V2 = v3(-1.000000,  1.000000,  1.000000);
     v3 V3 = v3(-1.000000, -1.000000, -1.000000);
@@ -78,14 +78,17 @@ s32 main() {
     // V2 = V2 + TriPos;
     // V3 = V3 + TriPos;
 
-    world.triangle_count = 2;
+    V2 = v3(-1.000000,  1.000000,  1.000000);
+    V3 = v3(-1.000000, -1.000000, -1.000000);
+    V1 = v3(-1.000000, -1.000000,  1.000000);
+
+    // v3 Origin = (V0 - V1) * 0.5f + (V2 - V1) * 0.5f;
+    // Origin = (V2 - V3) * 0.5f + (V1 - V3) * 0.5f;
+    
+    world.triangle_count = 1;
     AdditionalTriangles[0].V0 = V2;
     AdditionalTriangles[0].V1 = V3;
     AdditionalTriangles[0].V2 = V1;
-
-    AdditionalTriangles[1].V0 = V8;
-    AdditionalTriangles[1].V1 = V5;
-    AdditionalTriangles[1].V2 = V7;
 #endif
     
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
@@ -93,7 +96,7 @@ s32 main() {
     //Camera
     f32 fov = 20;    
     v3 CamLookAt = v3(0,0,0);
-    v3 CamPos    = v3(-10,10,17);
+    v3 CamPos    = v3(-5,5,20);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));

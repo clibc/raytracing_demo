@@ -93,7 +93,7 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
     v3 Edge2 = Tri.V0 - Tri.V2;
     v3 Normal = Normalize(Cross(Tri.V1 - Tri.V0, Tri.V2 - Tri.V0));
 
-    v3 Origin = Tri.V0 + (Edge0 * 0.5f) + Tri.V0 + (Tri.V2 - Tri.V0) * 0.5f;
+    v3 Origin = Tri.V0 + (Edge0 * 0.5f) + (Tri.V2 - Tri.V0) * 0.5f;
     
     v3 Point = {};
     f32 T = 0;
@@ -123,7 +123,7 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
         {
             Material M;
             M.type = METAL;
-            M.color = v3(0.8, 0.6, 0.2);
+            M.color = v3(1, 1, 1);
             M.fuzz = 0.01f;
 
             Output.mat = M;

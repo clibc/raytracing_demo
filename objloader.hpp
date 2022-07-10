@@ -26,8 +26,8 @@ char* ReadEntireFile(const char* path, int* data_length = NULL) {
     return buffer;
 }
 
-static f32 Values[100];
-static s32 Faces[60];
+static f32 Values[10000];
+static s32 Faces[6000];
 
 void
 LoadOBJ(char* FilePath, v3* Vertices, u32* Count)
