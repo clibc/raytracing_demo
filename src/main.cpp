@@ -85,7 +85,7 @@ i32 main() {
     AdditionalTriangles[0].V2 = V1;
 #endif
     
-    //world.triangle_count = 30;
+    world.triangle_count = 0;
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
@@ -212,9 +212,11 @@ RandomScene(World& world) {
     world.count = 5;
 
     u32 Index = 5;
-#if 0
-    for(i32 a = -11; a < 11; ++a) {
-        for (int b = -11; b < 11; b++) {
+#if 1
+    for(i32 a = -11; a < 11; ++a)
+    {
+        for (int b = -11; b < 11; b++)
+        {
             if(Index >= MaxSphereCount) break;
             f32 x = (float)a;
             f32 z = (float)b;
@@ -223,21 +225,25 @@ RandomScene(World& world) {
             v3  RandomCol = v3(Rand01(), Rand01(), Rand01());
             f32 Radius    = 0.2;
             
-            if((Pos - Length(v3(4,0,0)) > 0.9) {
-                if(RandomMat < 0.8) { // diffuse
+            if(Length(Pos - v3(4,0,0)) > 0.9f)
+            {
+                if(RandomMat < 0.8)
+                { // diffuse
                     spheres[Index].center = Pos;
                     spheres[Index].radius = Radius;
                     spheres[Index].mat.type  = LAMBERIAN;
                     spheres[Index].mat.color = RandomCol;
                 }
-                else if(RandomMat < 0.95) { // metal
+                else if(RandomMat < 0.95)
+                { // metal
                     spheres[Index].center = Pos;
                     spheres[Index].radius = Radius;
                     spheres[Index].mat.type  = METAL;
                     spheres[Index].mat.color = RandomCol;
                     spheres[Index].mat.fuzz  = Rand01() * 0.5;
                 }
-                else { // glass
+                else
+                { // glass
                     spheres[Index].center = Pos;
                     spheres[Index].radius = Radius;
                     spheres[Index].mat.type  = DIELECTRIC;
@@ -245,8 +251,9 @@ RandomScene(World& world) {
                 }
                 ++Index;
             }
-        }
+        }        
     }
+
 #endif    
     world.count = Index;
 }
