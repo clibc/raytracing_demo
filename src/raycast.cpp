@@ -1,36 +1,42 @@
 #pragma once
 
-enum MaterialType {
+enum MaterialType
+{
     LAMBERIAN,
     METAL,
     DIELECTRIC
 };
 
-struct Material {
+struct Material
+{
     MaterialType type;
     v3 color;
     f32 fuzz;
 };
 
-struct Ray {
+struct Ray
+{
     v3 o;
     v3 d;
 };
 
-struct HitRecord {
+struct HitRecord
+{
     v3 point;
     v3 normal;
     f32 t;
     bool front;
     Material mat;
 
-    inline void SetFaceNormal(v3 ray_dir, v3 out_normal) {
+    inline void SetFaceNormal(v3 ray_dir, v3 out_normal)
+    {
         front  = Dot(ray_dir, out_normal) < 0;
         normal = front ? out_normal : out_normal * -1;
     }
 };
 
-struct Sphere {
+struct Sphere
+{
     v3 center;
     f32 radius;
     Material mat;
@@ -44,7 +50,8 @@ struct Triangle
     Material mat;
 };
 
-struct World {
+struct World
+{
     Sphere* spheres;
     u32 count;
     Triangle* triangles;
@@ -52,7 +59,8 @@ struct World {
 };
 
 static f32
-Reflectance(f32 cosine, f32 ref_idx) {
+Reflectance(f32 cosine, f32 ref_idx)
+{
     // Use Schlick's approximation for reflectance.
     auto r0 = (1-ref_idx) / (1+ref_idx);
     r0 = r0*r0;
@@ -60,7 +68,8 @@ Reflectance(f32 cosine, f32 ref_idx) {
 }
 
 static bool
-HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
+HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max)
+{
     v3 oc = ro - s.center;
     f32 a = SqrLength(rd);
     f32 b = Dot(oc, rd);
@@ -71,7 +80,8 @@ HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
 
     f32 sqrtd = Sqrt(discriminant);
     f32 root = (-b - sqrtd) / a;
-    if (root < t_min || t_max < root) {
+    if (root < t_min || t_max < root)
+    {
         root = (-b + sqrtd) / a;
         if (root < t_min || t_max < root)
             return false;
@@ -88,12 +98,8 @@ HitSphere(v3 ro, v3 rd, Sphere s, HitRecord& hit, f32 t_min, f32 t_max) {
 
 bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TMax)
 {
-    v3 Edge0 = Tri.V1 - Tri.V0;
-    v3 Edge1 = Tri.V2 - Tri.V1;
-    v3 Edge2 = Tri.V0 - Tri.V2;
     v3 Normal = Normalize(Cross(Tri.V1 - Tri.V0, Tri.V2 - Tri.V0));
-
-    v3 Origin = Tri.V0 + (Edge0 * 0.5f) + (Tri.V2 - Tri.V0) * 0.5f;
+    v3 Origin = Tri.V0 + ((Tri.V1 - Tri.V0) * 0.5f) + (Tri.V2 - Tri.V0) * 0.5f;
     
     v3 Point = {};
     f32 T = 0;
@@ -115,6 +121,10 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
 
     if(PlaneHit)
     {
+        v3 Edge0 = Tri.V1 - Tri.V0;
+        v3 Edge1 = Tri.V2 - Tri.V1;
+        v3 Edge2 = Tri.V0 - Tri.V2;
+
         bool IsInsideEdge0 = Dot(Normal, Cross(Edge0, Point - Tri.V0)) > 0;
         bool IsInsideEdge1 = Dot(Normal, Cross(Edge1, Point - Tri.V1)) > 0;
         bool IsInsideEdge2 = Dot(Normal, Cross(Edge2, Point - Tri.V2)) > 0;
@@ -139,57 +149,68 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
 }
 
 static bool
-HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max) {
+HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
+{
     HitRecord local_hit;
     bool isHit = false;
     f32 closest = t_max;
 
-    for(u32 i = 0; i < world.count; ++i) {
+    for(u32 i = 0; i < world.count; ++i)
+    {
         Sphere s = world.spheres[i];
-        if(HitSphere(r.o, r.d, s, local_hit, t_min, closest)) {
+        if(HitSphere(r.o, r.d, s, local_hit, t_min, closest))
+        {
             isHit = true;
             closest = local_hit.t;
             hit = local_hit;
         }
     }
 
-    for(u32 i = 0; i < world.triangle_count; ++i) {
+    for(u32 i = 0; i < world.triangle_count; ++i)
+    {
         Triangle t = world.triangles[i];
-        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest)) {
+        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest))
+        {
             isHit = true;
             closest = local_hit.t;
             hit = local_hit;
         }
     }
-
 
     return isHit;
 }
 
 static v3
-RayColor(Ray r, World world, u32 depth) {
+RayColor(Ray r, World world, u32 depth)
+{
     HitRecord hit;
 
     if(depth <= 0) return v3(0,0,0);
     
-    if(HitWorld(r, world, hit, 0.0005f, 100)) {
+    if(HitWorld(r, world, hit, 0.0005f, 100))
+    {
         Ray ray;
         ray.o = hit.point;
 
-        if(hit.mat.type == LAMBERIAN) { 
+        if(hit.mat.type == LAMBERIAN)
+        { 
             v3 target = hit.point + RandomInHemiSphere(hit.normal);
             ray.d = target - hit.point;
             return hit.mat.color * RayColor(ray, world, depth - 1);
         }
-        else if (hit.mat.type == METAL) {
+        else if (hit.mat.type == METAL)
+        {
             ray.d = Normalize(Reflect(r.d, hit.normal));
             ray.d = ray.d + hit.mat.fuzz * RandomInUnitSphere();
 
             if(Dot(ray.d, hit.normal) > 0.0f)
+            {
                 return hit.mat.color * RayColor(ray, world, depth - 1);
+            }
             else return v3(0,0,0);
         }
-        else if(hit.mat.type == DIELECTRIC) {
+        else if(hit.mat.type == DIELECTRIC)
+        {
             f32 ir = 1.5f;
             f32 refraction_ratio = hit.front ? (1.0f/ir) : ir;
             v3 unit_dir = Normalize(r.d);
@@ -198,18 +219,15 @@ RayColor(Ray r, World world, u32 depth) {
 
             bool cannot_reflect = (refraction_ratio * sin_theta) > 1.0f;
 
-            if(cannot_reflect || Reflectance(cos_theta, refraction_ratio) > Rand01()) {
+            if(cannot_reflect || Reflectance(cos_theta, refraction_ratio) > Rand01())
+            {
                 ray.d = Reflect(unit_dir, hit.normal);
             }
-            else {
+            else
+            {
                 ray.d = Refract(unit_dir, hit.normal, refraction_ratio);
             }
 
-            // if(!hit.front) {
-            //     DebugLog("Is not front\n");
-            // }
-
-//r.d = Normalize(r.d);
             return RayColor(ray, world, depth - 1);
         }
     }

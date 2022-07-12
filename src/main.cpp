@@ -1,4 +1,5 @@
 #include "headers.h"
+#include <intrin.h>
 
 #define IMAGE_WIDTH 300
 #define IMAGE_HEIGHT 200
@@ -63,7 +64,8 @@ s32 main() {
         AdditionalTriangles[TriIndex].V1 = Vertices[I + 1] + TriPos;
         AdditionalTriangles[TriIndex].V2 = Vertices[I + 2] + TriPos;
     }
-#if 1
+    
+#if 0
     v3 V1 = v3(-1.000000, -1.000000,  1.000000);
     v3 V2 = v3(-1.000000,  1.000000,  1.000000);
     v3 V3 = v3(-1.000000, -1.000000, -1.000000);
@@ -73,24 +75,17 @@ s32 main() {
     v3 V7 = v3(1.000000,  -1.000000, -1.000000);
     v3 V8 = v3(1.000000,   1.000000, -1.000000);
 
-    // V0 = V0 + TriPos;
-    // V1 = V1 + TriPos;
-    // V2 = V2 + TriPos;
-    // V3 = V3 + TriPos;
-
     V2 = v3(-1.000000,  1.000000,  1.000000);
     V3 = v3(-1.000000, -1.000000, -1.000000);
     V1 = v3(-1.000000, -1.000000,  1.000000);
 
-    // v3 Origin = (V0 - V1) * 0.5f + (V2 - V1) * 0.5f;
-    // Origin = (V2 - V3) * 0.5f + (V1 - V3) * 0.5f;
-    
     world.triangle_count = 1;
     AdditionalTriangles[0].V0 = V2;
     AdditionalTriangles[0].V1 = V3;
     AdditionalTriangles[0].V2 = V1;
 #endif
     
+    //world.triangle_count = 30;
     fprintf(stdout, "%i %i\n%i\n", IMAGE_WIDTH, IMAGE_HEIGHT, 255);
 
     //Camera
@@ -124,8 +119,13 @@ s32 main() {
     u32 SamplePP = 50;
     u32 Depth    = 10;
 
+    u64 StartTime = time(NULL) * 1000;
+    
+    u64 TotalCycles = 0;
+    u64 Cycles = __rdtsc();
     for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
         DebugLog("\rRendering %f", ((float)y/IMAGE_HEIGHT) * 100.0f);
+        
         for(s32 x = 0; x < IMAGE_WIDTH; ++x) {
             v3 color = v3(0,0,0);
             for(u32 i = 0; i < SamplePP; ++i) {
@@ -164,7 +164,12 @@ s32 main() {
             WriteColor01(color);
         }
     }
-    
+
+    f32 EndTimeSeconds = f32((time(NULL)*1000) - StartTime) / 1000;
+    TotalCycles = __rdtsc() - Cycles;
+    DebugLog("\nTotal Cycles : %I64d\n", TotalCycles);
+    DebugLog("Average : %I64d\n", TotalCycles/(IMAGE_WIDTH*IMAGE_HEIGHT));
+    DebugLog("TimePassed : %f\n", EndTimeSeconds);
     return 0;
 }
 
