@@ -22,7 +22,7 @@ WriteColor01(v3 color) {
     fprintf(stdout, "%i %i %i\n", r, g, b);
 }
 
-s32 main() {
+i32 main() {
     fprintf(stdout, "P3\n");
 
     World world;
@@ -57,8 +57,8 @@ s32 main() {
     Triangle* AdditionalTriangles = (Triangle*)malloc(sizeof(Triangle) * (VertexCount / 3));
     world.triangles = AdditionalTriangles;
 
-    s32 TriIndex = 0;
-    for(s32 I = 0; I < VertexCount; I += 3, TriIndex += 1)
+    i32 TriIndex = 0;
+    for(i32 I = 0; I < VertexCount; I += 3, TriIndex += 1)
     {
         AdditionalTriangles[TriIndex].V0 = Vertices[I + 0] + TriPos;
         AdditionalTriangles[TriIndex].V1 = Vertices[I + 1] + TriPos;
@@ -123,10 +123,10 @@ s32 main() {
     
     u64 TotalCycles = 0;
     u64 Cycles = __rdtsc();
-    for(s32 y = 0; y < IMAGE_HEIGHT; ++y) {
+    for(i32 y = 0; y < IMAGE_HEIGHT; ++y) {
         DebugLog("\rRendering %f", ((float)y/IMAGE_HEIGHT) * 100.0f);
         
-        for(s32 x = 0; x < IMAGE_WIDTH; ++x) {
+        for(i32 x = 0; x < IMAGE_WIDTH; ++x) {
             v3 color = v3(0,0,0);
             for(u32 i = 0; i < SamplePP; ++i) {
                 f32 randx = Rand01() * 2 - 1;
@@ -213,7 +213,7 @@ RandomScene(World& world) {
 
     u32 Index = 5;
 #if 0
-    for(s32 a = -11; a < 11; ++a) {
+    for(i32 a = -11; a < 11; ++a) {
         for (int b = -11; b < 11; b++) {
             if(Index >= MaxSphereCount) break;
             f32 x = (float)a;

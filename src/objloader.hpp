@@ -13,7 +13,7 @@ char* ReadEntireFile(const char* path, int* data_length = NULL) {
     }
 
     file.seekg(0, file.end);
-    s32 length = file.tellg();
+    i32 length = file.tellg();
     file.seekg(0, file.beg);
     char* buffer = new char [length + 1];
     file.read(buffer, length);
@@ -27,19 +27,19 @@ char* ReadEntireFile(const char* path, int* data_length = NULL) {
 }
 
 static f32 Values[10000];
-static s32 Faces[6000];
+static i32 Faces[6000];
 
 void
 LoadOBJ(char* FilePath, v3* Vertices, u32* Count)
 {
-    s32 Size = 0;
+    i32 Size = 0;
     char* FileContent = ReadEntireFile(FilePath, &Size);
 
     const char LineDelim[2] = {'\n'};
     const char ValueDelim[2] = {' '};
 
-    s32 ValuesCount = 0;
-    s32 FacesCount  = 0;
+    i32 ValuesCount = 0;
+    i32 FacesCount  = 0;
     
     for(;;)
     {
@@ -74,11 +74,11 @@ LoadOBJ(char* FilePath, v3* Vertices, u32* Count)
         }
     }
 
-    s32 VertexIndex = 0;
+    i32 VertexIndex = 0;
         
-    for(s32 I = 0; I < FacesCount; I += 1)
+    for(i32 I = 0; I < FacesCount; I += 1)
     {
-        s32 Index = (Faces[I] - 1) * 3;
+        i32 Index = (Faces[I] - 1) * 3;
         Vertices[VertexIndex++] = v3(Values[Index + 0],
                                      Values[Index + 1],
                                      Values[Index + 2]);
