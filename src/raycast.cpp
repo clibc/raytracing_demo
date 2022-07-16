@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xmmintrin.h>
+
 enum MaterialType
 {
     LAMBERIAN,
@@ -148,6 +150,7 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
     return false;
 }
 
+#if 0
 static bool
 HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 {
@@ -179,7 +182,116 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 
     return isHit;
 }
+#else
+static bool
+HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
+{
+    HitRecord local_hit;
+    bool isHit = false;
+    f32 closest = t_max;
+    v3 ro = r.o;
+    v3 rd = r.d;
+#if 0
+    for(u32 i = 0; i < world.count; ++i)
+    {
+        Sphere s = world.spheres[i];
+        
+        v3 oc = ro - s.center;
+        f32 a = SqrLength(rd);
+        f32 b = Dot(oc, rd);
+        f32 c = SqrLength(oc) - s.radius * s.radius;
+        f32 discriminant = b*b - a*c;
+    
+        if(discriminant < 0) continue;
 
+        f32 sqrtd = Sqrt(discriminant);
+        f32 root = (-b - sqrtd) / a;
+        if (root < t_min || root > closest)
+        {
+            root = (-b + sqrtd) / a;
+            if (root < t_min || closest < root)
+                continue;
+        }
+
+        local_hit.t = root;
+        local_hit.point = ro + rd * local_hit.t;
+        v3 out_normal = (local_hit.point - s.center) / s.radius;
+        local_hit.SetFaceNormal(rd, out_normal);
+        local_hit.mat = s.mat;
+
+        isHit = true;
+        closest = local_hit.t;
+        hit = local_hit;
+
+    }
+#else
+    __m128 RayX = _mm_set_ps1(ro.x);
+    __m128 RayY = _mm_set_ps1(ro.y);
+    __m128 RayZ = _mm_set_ps1(ro.z);
+    __m128 RayDX = _mm_set_ps1(rd.x);
+    __m128 RayDY = _mm_set_ps1(rd.y);
+    __m128 RayDZ = _mm_set_ps1(rd.z);
+    __m128 A = _mm_set_ps1(SqrLength(rd));
+    __m128 TMin = _mm_set_ps1(t_min);
+    __m128 TMax = _mm_set_ps1(t_max);
+    
+    for(u32 I = 0; I < world.count; I += 4)
+    {
+        __m128 SpheresX = _mm_set_ps(world.spheres[I + 0].center.x,
+                                     world.spheres[I + 1].center.x,
+                                     world.spheres[I + 2].center.x,
+                                     world.spheres[I + 3].center.x);
+        __m128 SpheresY = _mm_set_ps(world.spheres[I + 0].center.y,
+                                     world.spheres[I + 1].center.y,
+                                     world.spheres[I + 2].center.y,
+                                     world.spheres[I + 3].center.y);
+        __m128 SpheresZ = _mm_set_ps(world.spheres[I + 0].center.z,
+                                     world.spheres[I + 1].center.z,
+                                     world.spheres[I + 2].center.z,
+                                     world.spheres[I + 3].center.z);
+
+        __m128 SpheresRad = _mm_set_ps(world.spheres[I + 0].radius,
+                                       world.spheres[I + 1].radius,
+                                       world.spheres[I + 2].radius,
+                                       world.spheres[I + 3].radius);
+        
+        __m128 OCX = _mm_sub_ps(RayX, SpheresX);
+        __m128 OCY = _mm_sub_ps(RayY, SpheresY);
+        __m128 OCZ = _mm_sub_ps(RayZ, SpheresZ);
+        __m128 SqrLenOC = _mm_add_ps(_mm_mul_ps(OCX, OCX),
+                                     _mm_add_ps(_mm_mul_ps(OCY, OCY),
+                                                _mm_mul_ps(OCZ, OCZ)));
+        
+        __m128 BMulX = _mm_mul_ps(OCX, RayDX);
+        __m128 BMulY = _mm_mul_ps(OCY, RayDY);
+        __m128 BMulZ = _mm_mul_ps(OCZ, RayDZ);
+        __m128 B = _mm_add_ps(BMulX, _mm_add_ps(BMulY, BMulZ));
+
+        __m128 C = _mm_sub_ps(SqrLenOC, _mm_mul_ps(SpheresRad, SpheresRad));
+
+        __m128 Discriminant = _mm_sub_ps(_mm_mul_ps(B,B),
+                                         _mm_mul_ps(A,C));
+
+        __m128 SqrtDiscriminant = _mm_sqrt_ps(Discriminant);
+        __m128 T = _mm_div_ps(_mm_sub_ps(_mm_mul_ps(B, _mm_set_ps1(-1.0f)), SqrtDiscriminant), A);
+
+        __m128 TLessThanTMin = _mm_cmplt_ps(T, TMin);
+    }
+#endif
+    for(u32 i = 0; i < world.triangle_count; ++i)
+    {
+        Triangle t = world.triangles[i];
+        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest))
+        {
+            isHit = true;
+            closest = local_hit.t;
+            hit = local_hit;
+        }
+    }
+
+    return isHit;
+}
+#endif
 static v3
 RayColor(Ray r, World world, u32 depth)
 {
