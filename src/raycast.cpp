@@ -1,6 +1,16 @@
 #pragma once
 
 #include <xmmintrin.h>
+#include <smmintrin.h>
+
+static inline float
+M128Min(__m128 A)
+{
+    A = _mm_min_ps(A, _mm_shuffle_ps(A, A, 78));
+    A = _mm_min_ps(A, _mm_shuffle_ps(A, A, 177));
+
+    return *(float*)&A;
+}
 
 enum MaterialType
 {
@@ -156,29 +166,28 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 {
     HitRecord local_hit;
     bool isHit = false;
-    f32 closest = t_max;
 
     for(u32 i = 0; i < world.count; ++i)
     {
         Sphere s = world.spheres[i];
-        if(HitSphere(r.o, r.d, s, local_hit, t_min, closest))
+        if(HitSphere(r.o, r.d, s, local_hit, t_min, t_max))
         {
             isHit = true;
-            closest = local_hit.t;
+            t_max = local_hit.t;
             hit = local_hit;
         }
     }
 
-    for(u32 i = 0; i < world.triangle_count; ++i)
-    {
-        Triangle t = world.triangles[i];
-        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest))
-        {
-            isHit = true;
-            closest = local_hit.t;
-            hit = local_hit;
-        }
-    }
+    // for(u32 i = 0; i < world.triangle_count; ++i)
+    // {
+    //     Triangle t = world.triangles[i];
+    //     if(HitTriangle(r.o, r.d, t, local_hit, t_min, t_max))
+    //     {
+    //         isHit = true;
+    //         t_max = local_hit.t;
+    //         hit = local_hit;
+    //     }
+    // }
 
     return isHit;
 }
@@ -188,28 +197,27 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 {
     HitRecord local_hit;
     bool isHit = false;
-    f32 closest = t_max;
     v3 ro = r.o;
     v3 rd = r.d;
 #if 0
+    f32 a = SqrLength(rd);
     for(u32 i = 0; i < world.count; ++i)
     {
         Sphere s = world.spheres[i];
-        
-        v3 oc = ro - s.center;
-        f32 a = SqrLength(rd);
-        f32 b = Dot(oc, rd);
-        f32 c = SqrLength(oc) - s.radius * s.radius;
-        f32 discriminant = b*b - a*c;
+
+        v3 co = s.center - ro;
+        f32 nb = Dot(co, rd);
+        f32 c = SqrLength(co) - s.radius * s.radius;
+        f32 discriminant = nb*nb - a*c;
     
         if(discriminant < 0) continue;
 
         f32 sqrtd = Sqrt(discriminant);
-        f32 root = (-b - sqrtd) / a;
-        if (root < t_min || root > closest)
+        f32 root = (nb - sqrtd) / a;
+        if (root < t_min || root > t_max)
         {
-            root = (-b + sqrtd) / a;
-            if (root < t_min || closest < root)
+            root = (nb + sqrtd) / a;
+            if (root < t_min || root > t_max)
                 continue;
         }
 
@@ -220,9 +228,8 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
         local_hit.mat = s.mat;
 
         isHit = true;
-        closest = local_hit.t;
+        t_max = local_hit.t;
         hit = local_hit;
-
     }
 #else
     __m128 RayX = _mm_set_ps1(ro.x);
@@ -234,6 +241,11 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
     __m128 A = _mm_set_ps1(SqrLength(rd));
     __m128 TMin = _mm_set_ps1(t_min);
     __m128 TMax = _mm_set_ps1(t_max);
+    __m128 HitT = _mm_set_ps1(t_max);
+    __m128i SphereIDs = {};
+
+    // TODO: Add spheres with 0 radius instead of removing
+    world.count = world.count - (world.count % 4);
     
     for(u32 I = 0; I < world.count; I += 4)
     {
@@ -254,37 +266,79 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
                                        world.spheres[I + 1].radius,
                                        world.spheres[I + 2].radius,
                                        world.spheres[I + 3].radius);
-        
-        __m128 OCX = _mm_sub_ps(RayX, SpheresX);
-        __m128 OCY = _mm_sub_ps(RayY, SpheresY);
-        __m128 OCZ = _mm_sub_ps(RayZ, SpheresZ);
-        __m128 SqrLenOC = _mm_add_ps(_mm_mul_ps(OCX, OCX),
-                                     _mm_add_ps(_mm_mul_ps(OCY, OCY),
-                                                _mm_mul_ps(OCZ, OCZ)));
-        
-        __m128 BMulX = _mm_mul_ps(OCX, RayDX);
-        __m128 BMulY = _mm_mul_ps(OCY, RayDY);
-        __m128 BMulZ = _mm_mul_ps(OCZ, RayDZ);
-        __m128 B = _mm_add_ps(BMulX, _mm_add_ps(BMulY, BMulZ));
 
-        __m128 C = _mm_sub_ps(SqrLenOC, _mm_mul_ps(SpheresRad, SpheresRad));
+        __m128i SpheresID = _mm_set_epi32(I + 0, I + 1, I + 2, I + 3);
 
-        __m128 Discriminant = _mm_sub_ps(_mm_mul_ps(B,B),
+        __m128 COX = _mm_sub_ps(SpheresX, RayX);
+        __m128 COY = _mm_sub_ps(SpheresY, RayY);
+        __m128 COZ = _mm_sub_ps(SpheresZ, RayZ);
+        
+        __m128 BMulX = _mm_mul_ps(COX, RayDX);
+        __m128 BMulY = _mm_mul_ps(COY, RayDY);
+        __m128 BMulZ = _mm_mul_ps(COZ, RayDZ);
+        __m128 NB = _mm_add_ps(BMulX, _mm_add_ps(BMulY, BMulZ));
+
+        __m128 SqrLenCO = _mm_add_ps(_mm_mul_ps(COX, COX),
+                                     _mm_add_ps(_mm_mul_ps(COY, COY),
+                                                _mm_mul_ps(COZ, COZ)));
+
+        __m128 C = _mm_sub_ps(SqrLenCO, _mm_mul_ps(SpheresRad, SpheresRad));
+
+        __m128 Discriminant = _mm_sub_ps(_mm_mul_ps(NB,NB),
                                          _mm_mul_ps(A,C));
 
-        __m128 SqrtDiscriminant = _mm_sqrt_ps(Discriminant);
-        __m128 T = _mm_div_ps(_mm_sub_ps(_mm_mul_ps(B, _mm_set_ps1(-1.0f)), SqrtDiscriminant), A);
+        __m128 DiscMask = _mm_cmpgt_ps(Discriminant, _mm_set_ps1(0.0f));
 
-        __m128 TLessThanTMin = _mm_cmplt_ps(T, TMin);
+        if(_mm_movemask_ps(DiscMask))
+        {
+            __m128 SqrtDiscriminant = _mm_sqrt_ps(Discriminant);
+            __m128 T1 = _mm_div_ps(_mm_sub_ps(NB, SqrtDiscriminant), A);
+            __m128 T2 = _mm_div_ps(_mm_add_ps(NB, SqrtDiscriminant), A);
+            __m128 T1Mask = _mm_cmpgt_ps(T1, TMin);
+            __m128 T = _mm_blendv_ps(T2, T1, T1Mask); // Select T1 if T1Mask is set otherwise T2
+
+            // DiscMask && T > TMin && T < HitT
+            __m128 Mask = _mm_and_ps(DiscMask, _mm_and_ps(_mm_cmpgt_ps(T, TMin), (_mm_cmplt_ps(T, HitT))));
+            
+            HitT = _mm_blendv_ps(HitT, T, Mask);
+            SphereIDs = _mm_blendv_epi8(SphereIDs, SpheresID, _mm_castps_si128(Mask));
+        }
     }
+
+    f32 Min = M128Min(HitT);
+    if(Min < *(f32*)&TMax)
+    {
+        int MinMask = _mm_movemask_ps(_mm_cmpeq_ps(HitT, _mm_set1_ps(Min)));
+        
+        static const int LaneId[16] =
+        {
+            0, 0, 1, 0,
+            2, 0, 1, 0,
+            3, 0, 1, 0,
+            2, 0, 1, 0,
+        };
+
+        i32 ID = LaneId[MinMask];
+        i32 SphereID = ((i32*)&SphereIDs)[ID];
+           
+        local_hit.t = Min;
+        local_hit.point = ro + rd * local_hit.t;
+        v3 out_normal = (local_hit.point - world.spheres[SphereID].center) / world.spheres[SphereID].radius;
+        local_hit.SetFaceNormal(rd, out_normal);
+        local_hit.mat = world.spheres[SphereID].mat;
+
+        isHit = true;
+        hit = local_hit;
+    }
+    
 #endif
     for(u32 i = 0; i < world.triangle_count; ++i)
     {
         Triangle t = world.triangles[i];
-        if(HitTriangle(r.o, r.d, t, local_hit, t_min, closest))
+        if(HitTriangle(r.o, r.d, t, local_hit, t_min, t_max))
         {
             isHit = true;
-            closest = local_hit.t;
+            t_max = local_hit.t;
             hit = local_hit;
         }
     }

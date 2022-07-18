@@ -1,10 +1,10 @@
 #include "headers.h"
 #include <intrin.h>
 
-#define IMAGE_WIDTH 300
-#define IMAGE_HEIGHT 200
-//#define IMAGE_WIDTH 1200
-//#define IMAGE_HEIGHT 800
+//#define IMAGE_WIDTH 300
+//#define IMAGE_HEIGHT 200
+#define IMAGE_WIDTH 1200
+#define IMAGE_HEIGHT 800
 
 static void RandomScene(World&);
 
@@ -27,7 +27,7 @@ i32 main() {
 
     World world;
     RandomScene(world);
-    world.count = 5;
+    //world.count = 5;
     Triangle Triangles[2];
     world.triangle_count = 2;
     world.triangles = Triangles;
@@ -92,7 +92,7 @@ i32 main() {
     //Camera
     f32 fov = 20;    
     v3 CamLookAt = v3(0,0,0);
-    v3 CamPos    = v3(-5,5,20);
+    v3 CamPos    = v3(25,5,5);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));
@@ -204,7 +204,7 @@ RandomScene(World& world) {
     spheres[1].mat.color = v3(0.1, 0.2, 0.5);
     
     // right
-    spheres[4].center = v3(4, 1, 0);
+    spheres[4].center = v3(4, 1, -4);
     spheres[4].radius = 1;
     spheres[4].mat.type  = METAL;
     spheres[4].mat.color = v3(0.8, 0.6, 0.2);
