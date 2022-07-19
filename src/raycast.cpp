@@ -3,6 +3,7 @@
 #include <xmmintrin.h>
 #include <smmintrin.h>
 
+
 static inline float
 M128Min(__m128 A)
 {
@@ -54,6 +55,15 @@ struct Sphere
     Material mat;
 };
 
+struct SphereSSE
+{
+    f32 X[4];
+    f32 Y[4];
+    f32 Z[4];
+    f32 Radius[4];
+    Material Mat[4];
+};
+
 struct Triangle
 {
     v3 V0;
@@ -68,6 +78,7 @@ struct World
     u32 count;
     Triangle* triangles;
     u32 triangle_count;
+    SphereSSE* SpheresSSE;
 };
 
 static f32
@@ -161,37 +172,6 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
 }
 
 #if !SPHERES_USE_SSE
-static bool
-HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
-{
-    HitRecord local_hit;
-    bool isHit = false;
-
-    for(u32 i = 0; i < world.count; ++i)
-    {
-        Sphere s = world.spheres[i];
-        if(HitSphere(r.o, r.d, s, local_hit, t_min, t_max))
-        {
-            isHit = true;
-            t_max = local_hit.t;
-            hit = local_hit;
-        }
-    }
-
-    // for(u32 i = 0; i < world.triangle_count; ++i)
-    // {
-    //     Triangle t = world.triangles[i];
-    //     if(HitTriangle(r.o, r.d, t, local_hit, t_min, t_max))
-    //     {
-    //         isHit = true;
-    //         t_max = local_hit.t;
-    //         hit = local_hit;
-    //     }
-    // }
-
-    return isHit;
-}
-#else
 static bool
 HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 {
@@ -294,6 +274,117 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
         v3 out_normal = (local_hit.point - world.spheres[SphereID].center) / world.spheres[SphereID].radius;
         local_hit.SetFaceNormal(rd, out_normal);
         local_hit.mat = world.spheres[SphereID].mat;
+
+        isHit = true;
+        hit = local_hit;
+    }
+    
+#if 0
+    for(u32 i = 0; i < world.triangle_count; ++i)
+    {
+        Triangle t = world.triangles[i];
+        if(HitTriangle(r.o, r.d, t, local_hit, t_min, t_max))
+        {
+            isHit = true;
+            t_max = local_hit.t;
+            hit = local_hit;
+        }
+    }
+#endif
+    return isHit;
+}
+#else
+static bool
+HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
+{
+    HitRecord local_hit;
+    bool isHit = false;
+    v3 ro = r.o;
+    v3 rd = r.d;
+
+    __m128 RayX = _mm_set_ps1(ro.x);
+    __m128 RayY = _mm_set_ps1(ro.y);
+    __m128 RayZ = _mm_set_ps1(ro.z);
+    __m128 RayDX = _mm_set_ps1(rd.x);
+    __m128 RayDY = _mm_set_ps1(rd.y);
+    __m128 RayDZ = _mm_set_ps1(rd.z);
+    __m128 A = _mm_set_ps1(SqrLength(rd));
+    __m128 TMin = _mm_set_ps1(t_min);
+    __m128 TMax = _mm_set_ps1(t_max);
+    __m128 HitT = _mm_set_ps1(t_max);
+    __m128i SphereIDs = {};
+    
+    for(u32 I = 0; I < world.count + 1; I += 4)
+    {
+        __m128 SpheresX = _mm_loadu_ps(world.SpheresSSE[I/4].X);
+        __m128 SpheresY = _mm_loadu_ps(world.SpheresSSE[I/4].Y);
+        __m128 SpheresZ = _mm_loadu_ps(world.SpheresSSE[I/4].Z);
+        __m128 SpheresRad = _mm_loadu_ps(world.SpheresSSE[I/4].Radius);
+
+        __m128i SpheresID = _mm_set_epi32(I + 3, I + 2, I + 1, I + 0);
+
+        __m128 COX = _mm_sub_ps(SpheresX, RayX);
+        __m128 COY = _mm_sub_ps(SpheresY, RayY);
+        __m128 COZ = _mm_sub_ps(SpheresZ, RayZ);
+        
+        __m128 BMulX = _mm_mul_ps(COX, RayDX);
+        __m128 BMulY = _mm_mul_ps(COY, RayDY);
+        __m128 BMulZ = _mm_mul_ps(COZ, RayDZ);
+        __m128 NB = _mm_add_ps(BMulX, _mm_add_ps(BMulY, BMulZ));
+
+        __m128 SqrLenCO = _mm_add_ps(_mm_mul_ps(COX, COX),
+                                     _mm_add_ps(_mm_mul_ps(COY, COY),
+                                                _mm_mul_ps(COZ, COZ)));
+
+        __m128 C = _mm_sub_ps(SqrLenCO, _mm_mul_ps(SpheresRad, SpheresRad));
+
+        __m128 Discriminant = _mm_sub_ps(_mm_mul_ps(NB,NB),
+                                         _mm_mul_ps(A,C));
+
+        __m128 DiscMask = _mm_cmpgt_ps(Discriminant, _mm_set_ps1(0.0f));
+
+        if(_mm_movemask_ps(DiscMask))
+        {
+            __m128 SqrtDiscriminant = _mm_sqrt_ps(Discriminant);
+            __m128 T1 = _mm_div_ps(_mm_sub_ps(NB, SqrtDiscriminant), A);
+            __m128 T2 = _mm_div_ps(_mm_add_ps(NB, SqrtDiscriminant), A);
+            __m128 T1Mask = _mm_cmpgt_ps(T1, TMin);
+            __m128 T = _mm_blendv_ps(T2, T1, T1Mask); // Select T1 if T1Mask is set otherwise T2
+
+            // DiscMask && T > TMin && T < HitT
+            __m128 Mask = _mm_and_ps(DiscMask, _mm_and_ps(_mm_cmpgt_ps(T, TMin), (_mm_cmplt_ps(T, HitT))));
+            
+            HitT = _mm_blendv_ps(HitT, T, Mask);
+            SphereIDs = _mm_blendv_epi8(SphereIDs, SpheresID, _mm_castps_si128(Mask));
+        }
+    }
+
+    f32 Min = M128Min(HitT);
+    if(Min < *(f32*)&TMax)
+    {
+        int MinMask = _mm_movemask_ps(_mm_cmpeq_ps(HitT, _mm_set1_ps(Min)));
+        
+        static const int LaneId[16] =
+        {
+            0, 0, 1, 0,
+            2, 0, 1, 0,
+            3, 0, 1, 0,
+            2, 0, 1, 0,
+        };
+
+        i32 ID = LaneId[MinMask];
+        i32 SphereID = ((i32*)&SphereIDs)[ID];
+        i32 ArrayID = SphereID / 4;
+        i32 IndexID = SphereID % 4;
+
+        v3 Center = v3(world.SpheresSSE[ArrayID].X[IndexID], world.SpheresSSE[ArrayID].Y[IndexID], world.SpheresSSE[ArrayID].Z[IndexID]);
+        f32 Radius = world.SpheresSSE[ArrayID].Radius[IndexID];
+        
+        local_hit.t = Min;
+        local_hit.point = ro + rd * local_hit.t;
+        v3 out_normal = (local_hit.point - Center) / Radius;
+        local_hit.SetFaceNormal(rd, out_normal);
+        local_hit.mat = world.SpheresSSE[ArrayID].Mat[IndexID];
 
         isHit = true;
         hit = local_hit;

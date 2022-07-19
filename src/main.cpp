@@ -4,12 +4,13 @@
 #include "headers.h"
 #include <intrin.h>
 
-#define IMAGE_WIDTH 300
-#define IMAGE_HEIGHT 200
-//#define IMAGE_WIDTH 1200
-//#define IMAGE_HEIGHT 800
+//#define IMAGE_WIDTH 300
+//#define IMAGE_HEIGHT 200
+#define IMAGE_WIDTH 1200
+#define IMAGE_HEIGHT 800
 
 static void RandomScene(World&);
+static void RandomSceneSSE(World&);
 
 static inline void
 WriteColor01(v3 color) {
@@ -29,7 +30,12 @@ i32 main() {
     fprintf(stdout, "P3\n");
 
     World world;
+#if SPHERES_USE_SSE
+    RandomSceneSSE(world);
+#else
     RandomScene(world);
+#endif
+    
     Triangle Triangles[2];
     world.triangle_count = 2;
     world.triangles = Triangles;
@@ -259,4 +265,102 @@ RandomScene(World& world) {
 
 #endif    
     world.count = Index;
+}
+
+static void
+RandomSceneSSE(World& world) {
+    u32 MaxSphereCount = 1000;
+    world.SpheresSSE = (SphereSSE*)malloc(sizeof(SphereSSE) * MaxSphereCount/4);
+    memset(world.SpheresSSE, 0, sizeof(SphereSSE) * MaxSphereCount/4);
+
+    v3 Sphere0Pos = v3(0, -1000, 0);
+    v3 Sphere1Pos = v3(-4, 1, 0);
+    v3 Sphere2Pos = v3(0, 1, 0);
+    v3 Sphere3Pos = v3(0, 1, 0);
+    v3 Sphere4Pos = v3(4, 1, -4);
+    Material Sphere0Mat = {LAMBERIAN, v3(0.8, 0.8, 0.0)};
+    Material Sphere1Mat = {LAMBERIAN, v3(0.1, 0.2, 0.5)};
+    Material Sphere2Mat = {DIELECTRIC, v3(0.8, 0.8, 0.8)};
+    Material Sphere3Mat = {DIELECTRIC, v3(0.8, 0.8, 0.8)};
+    Material Sphere4Mat = {METAL, v3(0.8, 0.6, 0.2), 0.01f};
+
+    world.SpheresSSE[0].X[0] = Sphere0Pos.x;
+    world.SpheresSSE[0].Y[0] = Sphere0Pos.y;
+    world.SpheresSSE[0].Z[0] = Sphere0Pos.z;
+    world.SpheresSSE[0].Radius[0] = 1000.0f;
+    world.SpheresSSE[0].Mat[0] = Sphere0Mat;
+
+    world.SpheresSSE[0].X[1] = Sphere1Pos.x;
+    world.SpheresSSE[0].Y[1] = Sphere1Pos.y;
+    world.SpheresSSE[0].Z[1] = Sphere1Pos.z;
+    world.SpheresSSE[0].Radius[1] = 1.0f;
+    world.SpheresSSE[0].Mat[1] = Sphere1Mat;
+
+    world.SpheresSSE[0].X[2] = Sphere2Pos.x;
+    world.SpheresSSE[0].Y[2] = Sphere2Pos.y;
+    world.SpheresSSE[0].Z[2] = Sphere2Pos.z;
+    world.SpheresSSE[0].Radius[2] = 1.0f;
+    world.SpheresSSE[0].Mat[2] = Sphere2Mat;
+
+    world.SpheresSSE[0].X[3] = Sphere3Pos.x;
+    world.SpheresSSE[0].Y[3] = Sphere3Pos.y;
+    world.SpheresSSE[0].Z[3] = Sphere3Pos.z;
+    world.SpheresSSE[0].Radius[3] = -0.95f;
+    world.SpheresSSE[0].Mat[3] = Sphere3Mat;
+
+    world.SpheresSSE[1].X[0] = Sphere4Pos.x;
+    world.SpheresSSE[1].Y[0] = Sphere4Pos.y;
+    world.SpheresSSE[1].Z[0] = Sphere4Pos.z;
+    world.SpheresSSE[1].Radius[0] = 1.0f;
+    world.SpheresSSE[1].Mat[0] = Sphere4Mat;
+
+    world.count = 5;
+
+#if 1
+    for(i32 a = -11; a < 11; ++a)
+    {
+        for (int b = -11; b < 11; b++)
+        {
+            if(world.count >= MaxSphereCount) break;
+            f32 x = (float)a;
+            f32 z = (float)b;
+            f32 RandomMat = Rand01();
+            v3  Pos       = v3(x + Rand01() * 0.9, 0.2, z + Rand01() * 0.9);
+            v3  RandomCol = v3(Rand01(), Rand01(), Rand01());
+            f32 Radius    = 0.2;
+            
+            if(Length(Pos - v3(4,0,0)) > 0.9f)
+            {
+                i32 ArrayID = world.count / 4;
+                i32 IndexID = world.count % 4;
+                
+                if(RandomMat < 0.8)
+                { // diffuse
+                    world.SpheresSSE[ArrayID].X[IndexID] = Pos.x;
+                    world.SpheresSSE[ArrayID].Y[IndexID] = Pos.y;
+                    world.SpheresSSE[ArrayID].Z[IndexID] = Pos.z;
+                    world.SpheresSSE[ArrayID].Radius[IndexID] = Radius;
+                    world.SpheresSSE[ArrayID].Mat[IndexID] = {LAMBERIAN, RandomCol};
+                }
+                else if(RandomMat < 0.95)
+                { // metal
+                    world.SpheresSSE[ArrayID].X[IndexID] = Pos.x;
+                    world.SpheresSSE[ArrayID].Y[IndexID] = Pos.y;
+                    world.SpheresSSE[ArrayID].Z[IndexID] = Pos.z;
+                    world.SpheresSSE[ArrayID].Radius[IndexID] = Radius;
+                    world.SpheresSSE[ArrayID].Mat[IndexID] = {METAL, RandomCol};
+                }
+                else
+                { // glass
+                    world.SpheresSSE[ArrayID].X[IndexID] = Pos.x;
+                    world.SpheresSSE[ArrayID].Y[IndexID] = Pos.y;
+                    world.SpheresSSE[ArrayID].Z[IndexID] = Pos.z;
+                    world.SpheresSSE[ArrayID].Radius[IndexID] = Radius;
+                    world.SpheresSSE[ArrayID].Mat[IndexID] = {DIELECTRIC, v3(0.8, 0.8, 0.8)};
+                }
+                ++world.count;
+            }
+        }        
+    }
+#endif    
 }
