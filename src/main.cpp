@@ -1,5 +1,6 @@
 #define SPHERES_USE_SSE 1
 
+// SSE
 #include "headers.h"
 #include <intrin.h>
 
