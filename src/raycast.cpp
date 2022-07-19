@@ -160,7 +160,7 @@ bool HitTriangle(v3 RO, v3 RD, Triangle Tri, HitRecord& Output, f32 TMin, f32 TM
     return false;
 }
 
-#if 0
+#if !SPHERES_USE_SSE
 static bool
 HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
 {
@@ -199,39 +199,7 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
     bool isHit = false;
     v3 ro = r.o;
     v3 rd = r.d;
-#if 0
-    f32 a = SqrLength(rd);
-    for(u32 i = 0; i < world.count; ++i)
-    {
-        Sphere s = world.spheres[i];
 
-        v3 co = s.center - ro;
-        f32 nb = Dot(co, rd);
-        f32 c = SqrLength(co) - s.radius * s.radius;
-        f32 discriminant = nb*nb - a*c;
-    
-        if(discriminant < 0) continue;
-
-        f32 sqrtd = Sqrt(discriminant);
-        f32 root = (nb - sqrtd) / a;
-        if (root < t_min || root > t_max)
-        {
-            root = (nb + sqrtd) / a;
-            if (root < t_min || root > t_max)
-                continue;
-        }
-
-        local_hit.t = root;
-        local_hit.point = ro + rd * local_hit.t;
-        v3 out_normal = (local_hit.point - s.center) / s.radius;
-        local_hit.SetFaceNormal(rd, out_normal);
-        local_hit.mat = s.mat;
-
-        isHit = true;
-        t_max = local_hit.t;
-        hit = local_hit;
-    }
-#else
     __m128 RayX = _mm_set_ps1(ro.x);
     __m128 RayY = _mm_set_ps1(ro.y);
     __m128 RayZ = _mm_set_ps1(ro.z);
@@ -331,7 +299,7 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
         hit = local_hit;
     }
     
-#endif
+#if 0
     for(u32 i = 0; i < world.triangle_count; ++i)
     {
         Triangle t = world.triangles[i];
@@ -342,7 +310,7 @@ HitWorld(Ray r, World world, HitRecord& hit, f32 t_min, f32 t_max)
             hit = local_hit;
         }
     }
-
+#endif
     return isHit;
 }
 #endif

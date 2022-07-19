@@ -1,10 +1,12 @@
+#define SPHERES_USE_SSE 1
+
 #include "headers.h"
 #include <intrin.h>
 
-//#define IMAGE_WIDTH 300
-//#define IMAGE_HEIGHT 200
-#define IMAGE_WIDTH 1200
-#define IMAGE_HEIGHT 800
+#define IMAGE_WIDTH 300
+#define IMAGE_HEIGHT 200
+//#define IMAGE_WIDTH 1200
+//#define IMAGE_HEIGHT 800
 
 static void RandomScene(World&);
 
@@ -27,7 +29,6 @@ i32 main() {
 
     World world;
     RandomScene(world);
-    //world.count = 5;
     Triangle Triangles[2];
     world.triangle_count = 2;
     world.triangles = Triangles;
