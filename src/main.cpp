@@ -100,7 +100,7 @@ i32 main() {
     //Camera
     f32 fov = 20;    
     v3 CamLookAt = v3(0,0,0);
-    v3 CamPos    = v3(25,5,5);
+    v3 CamPos    = v3(13,2,3);
     v3 CamZ      = Normalize(CamLookAt - CamPos);
     v3 CamX      = Normalize(Cross(CamZ, v3(0,1,0)));
     v3 CamY      = Normalize(Cross(CamX, CamZ));
@@ -116,10 +116,12 @@ i32 main() {
     CamX *= viewport_x/2;
     CamY *= viewport_y/2;
     
-    CamToWorld.SetRow(0, CamX.x, CamX.y, CamX.z, 0);
-    CamToWorld.SetRow(1, CamY.x, CamY.y, CamY.z, 0);
-    CamToWorld.SetRow(2, CamZ.x, CamZ.y, CamZ.z, 0);
-    CamToWorld.SetRow(3, CamPos.x, CamPos.y, CamPos.z, 1);
+    // TODO : FUCKING FIX IDK WHY THIS IS NEEDS TO BE TRANSPOSED
+    SetRow(CamToWorld, 0, CamX.x, CamX.y, CamX.z, 0);
+    SetRow(CamToWorld, 1, CamY.x, CamY.y, CamY.z, 0);
+    SetRow(CamToWorld, 2, CamZ.x, CamZ.y, CamZ.z, 0);
+    SetRow(CamToWorld, 3, CamPos.x, CamPos.y, CamPos.z, 1);
+    CamToWorld = Transpose(CamToWorld);
     //
     
     f32 FocalLength = Length(CamPos - v3(4, 1, 0));
@@ -277,7 +279,7 @@ RandomSceneSSE(World& world) {
     v3 Sphere1Pos = v3(-4, 1, 0);
     v3 Sphere2Pos = v3(0, 1, 0);
     v3 Sphere3Pos = v3(0, 1, 0);
-    v3 Sphere4Pos = v3(4, 1, -4);
+    v3 Sphere4Pos = v3(4, 1, 0);
     Material Sphere0Mat = {LAMBERIAN, v3(0.8, 0.8, 0.0)};
     Material Sphere1Mat = {LAMBERIAN, v3(0.1, 0.2, 0.5)};
     Material Sphere2Mat = {DIELECTRIC, v3(0.8, 0.8, 0.8)};
